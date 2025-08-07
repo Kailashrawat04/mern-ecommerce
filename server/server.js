@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
@@ -17,11 +18,17 @@ const commonFeatureRouter = require("./routes/common/feature-routes");
 
 //create a database connection -> u can also
 //create a separate file for this and then import/use that file here
-
 mongoose
-  .connect("db_url")
-  .then(() => console.log("MongoDB connected"))
-  .catch((error) => console.log(error));
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((error) => {
+    console.error("MongoDB connection error:", error.message);
+    console.error("Please check your MONGODB_URI in the .env file");
+    process.exit(1);
+  });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -55,5 +62,29 @@ app.use("/api/shop/search", shopSearchRouter);
 app.use("/api/shop/review", shopReviewRouter);
 
 app.use("/api/common/feature", commonFeatureRouter);
+
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "Welcome to the MERN E-Commerce API",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      admin: {
+        products: "/api/admin/products",
+        orders: "/api/admin/orders"
+      },
+      shop: {
+        products: "/api/shop/products",
+        cart: "/api/shop/cart",
+        address: "/api/shop/address",
+        orders: "/api/shop/order",
+        search: "/api/shop/search",
+        reviews: "/api/shop/review"
+      },
+      common: "/api/common/feature"
+    }
+  });
+});
 
 app.listen(PORT, () => console.log(`Server is now running on port ${PORT}`));
